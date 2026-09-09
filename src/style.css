@@ -1,0 +1,568 @@
+/* Zenon's own palette, read out of the Syrius extension's stylesheets:
+   lime green on near-black neutrals, with a blue for anything secondary. */
+:root {
+  --bg: #0d0d0d;
+  --surface: rgba(24, 24, 24, 0.72);
+  --line: #2f2f2f;
+  --line-soft: #232323;
+  --green: #67e646;
+  --green-dim: #40bf21;
+  --blue: #446aef;
+  --text: #ededed;
+  --muted: #8a8a8a;
+  --danger: #ff5c00;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* A class that sets `display` outranks the UA rule behind the `hidden`
+   attribute, so hiding by attribute silently stops working the moment an
+   element is also a flex container. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+}
+
+/* Pulls the eye to the middle and stops the lattice fighting the card. */
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, transparent 26%, rgba(8, 8, 8, 0.62) 88%);
+}
+
+.card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 400px;
+  padding: 30px 28px 26px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  backdrop-filter: blur(14px) saturate(120%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.head {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.mark {
+  width: 30px;
+  height: 30px;
+  color: var(--green);
+  margin-bottom: 10px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sub {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* --- amount ------------------------------------------------------------- */
+
+.amount {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+}
+
+.step {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.step:hover:not(:disabled) {
+  border-color: var(--green-dim);
+  color: var(--green);
+}
+
+.step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.count {
+  min-width: 116px;
+  text-align: center;
+}
+
+.count output {
+  display: block;
+  font-size: 40px;
+  font-weight: 300;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+}
+
+.rate {
+  margin: 14px 0 22px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rate strong {
+  color: var(--text);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- wallet ------------------------------------------------------------- */
+
+.wallet {
+  margin-bottom: 14px;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.account .addr {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: var(--text);
+}
+
+.account .bal {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- buttons ------------------------------------------------------------ */
+
+button {
+  font: inherit;
+}
+
+.primary {
+  width: 100%;
+  padding: 13px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--green);
+  color: #0b0b0b;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.primary:hover:not(:disabled) {
+  background: #7bf05c;
+}
+
+.primary:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.ghost {
+  display: block;
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.ghost:hover:not(:disabled) {
+  border-color: var(--green-dim);
+  color: var(--green);
+}
+
+.ghost.small {
+  width: auto;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.supply {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.supply strong {
+  color: var(--green);
+  font-weight: 500;
+}
+
+/* --- status ------------------------------------------------------------- */
+
+.status {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* Set apart from the step list rather than sitting under it as a fifth step. */
+#cancel {
+  display: block;
+  margin: 16px auto 0;
+}
+
+.line {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* While a claim runs the list is the point of the screen, so the disclosure is
+   dressed down to nothing and only the steps show. `.live` is what says so --
+   once the claim is done the class comes off, the summary appears, and the same
+   markup becomes a collapsed row next to "Claim more". */
+.stepsbox.live > summary {
+  display: none;
+}
+
+.stepsbox > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+  user-select: none;
+  transition: color 0.2s;
+}
+
+.stepsbox > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A caret drawn from borders, so there is no glyph to load or fail to load. */
+.stepsbox > summary::before {
+  content: "";
+  width: 0;
+  height: 0;
+  flex: none;
+  border-left: 4px solid currentColor;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  transition: transform 0.2s;
+}
+
+.stepsbox[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.stepsbox[open]:not(.live) > summary {
+  margin-bottom: 12px;
+}
+
+.stepsbox > summary:hover,
+.stepsbox > summary:focus-visible {
+  color: var(--text);
+}
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+}
+
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  transition: color 0.2s;
+}
+
+.steps li::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line);
+  flex: none;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.steps li.active {
+  color: var(--text);
+}
+
+.steps li.active::before {
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(103, 230, 70, 0.16);
+}
+
+.steps li.done {
+  color: var(--muted);
+}
+
+.steps li.done::before {
+  background: var(--green-dim);
+}
+
+/* Pushed to the right edge so the icons line up in a column of their own,
+   rather than jittering with the length of each step's label. */
+.txlink {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  opacity: 0.55;
+  transition: opacity 0.2s, color 0.2s;
+}
+
+.txlink:hover,
+.txlink:focus-visible {
+  color: var(--green);
+  opacity: 1;
+}
+
+/* Three dots, appearing one after another and clearing together. */
+.dots i {
+  font-style: normal;
+  opacity: 0;
+  animation: blink 1.4s infinite;
+}
+
+.dots i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dots i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  25%,
+  75% {
+    opacity: 1;
+  }
+}
+
+/* --- done / error ------------------------------------------------------- */
+
+/* Named for the section, not the state. A bare `.done` here also matched the
+   completed <li>s in the step list, which then inherited this block's margin,
+   padding and rule -- a 41px step with a stray line above it. */
+.finished {
+  margin-top: 22px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-soft);
+  text-align: center;
+}
+
+.tick {
+  width: 34px;
+  height: 34px;
+  color: var(--green);
+}
+
+.tick path {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: draw 0.5s 0.05s ease-out forwards;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.finished p {
+  margin: 10px 0 18px;
+  font-size: 14px;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 92, 0, 0.35);
+  border-radius: 10px;
+  color: var(--danger);
+  font-size: 12.5px;
+}
+
+.error p {
+  margin: 0;
+  flex: 1;
+}
+
+/* The retry button keeps its own width next to a message of any length. */
+.error button {
+  flex: none;
+}
+
+/* A stop the user asked for is not a failure and should not read like one --
+   same box, same Retry button, none of the alarm. */
+.error.notice {
+  border-color: var(--line-soft);
+  color: var(--muted);
+}
+
+/* --- devnet-only -------------------------------------------------------- */
+
+.dev {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--line-soft);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.devtag {
+  padding: 2px 7px;
+  border: 1px solid var(--blue);
+  border-radius: 5px;
+  color: var(--blue);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  flex: none;
+}
+
+.dev span:nth-child(2) {
+  flex: 1;
+}
+
+/* --- footer ------------------------------------------------------------- */
+
+.foot {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding-top: 18px;
+  font-size: 11px;
+  color: #5a5a5a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-align: center;
+  transition: color 0.2s;
+}
+
+.foot.near {
+  color: var(--green);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dots i,
+  .tick path {
+    animation: none;
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* --- motion toggle -------------------------------------------------------- */
+
+.motion-toggle {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 3;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(24, 24, 24, 0.72);
+  backdrop-filter: blur(10px);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.motion-toggle:hover {
+  border-color: var(--green-dim);
+  color: var(--green);
+}
+
+.motion-toggle[aria-pressed="true"] {
+  border-color: var(--green-dim);
+  color: var(--green);
+}

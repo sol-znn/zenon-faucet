@@ -1,0 +1,31 @@
+{
+  "name": "zenon-faucet",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Claim GLYPHS by locking PlasmaPoints in a Zenon HTLC, driven from the browser.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && npm run obfuscate",
+    "build:raw": "tsc --noEmit && vite build",
+    "obfuscate": "node --env-file-if-exists=.env --experimental-strip-types scripts/obfuscate.ts",
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
+    "setup:devnet": "node --env-file-if-exists=.env --experimental-strip-types scripts/devnet-setup.ts",
+    "smoke": "node --env-file-if-exists=.env --experimental-strip-types scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.9.1",
+    "@noble/hashes": "^1.8.0",
+    "@scure/bip39": "^1.6.0",
+    "bech32": "^2.0.0",
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "@types/three": "^0.185.0",
+    "javascript-obfuscator": "^5.6.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5"
+  }
+}

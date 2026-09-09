@@ -1,0 +1,135 @@
+# Build the faucet and publish it to GitHub Pages.
+#
+# The faucet wallet is not in the repository. It is the FAUCET_MNEMONIC
+# repository secret, injected into the bundle by Vite's `define` at build time
+# (vite.config.ts) and then run through scripts/obfuscate.ts, which fails the
+# build if the phrase survives as readable text.
+#
+# Read that as what it is: the mnemonic is kept out of git, not made secret.
+# The built page ships the signing key to everyone who loads it -- it has to,
+# since it signs two blocks with no human present -- so treat the faucet wallet
+# as public-by-design, fund it with a faucet's worth of GLYPH and nothing else,
+# and rotate it by changing the secret and re-running this workflow.
+#
+# One-time setup:
+#   1. Settings -> Pages -> Source: GitHub Actions
+#   2. Settings -> Secrets and variables -> Actions -> New repository secret
+#        FAUCET_MNEMONIC   the 24-word phrase for the faucet wallet
+#   3. Settings -> Secrets and variables -> Actions -> Variables (optional,
+#      these are not secret and are visible in the built bundle anyway):
+#        FAUCET_RPC_URL    https:// or wss:// endpoint  [required in practice]
+#        FAUCET_NETWORK_NAME, FAUCET_CHAIN_ID, FAUCET_PP_ZTS, FAUCET_GLYPHS_ZTS
+#        FAUCET_ACCOUNT_INDEX   BIP-44 account index of FAUCET_MNEMONIC to
+#          sign with (m/44'/73404'/index', same derivation as znn_cli_dart
+#          and Syrius). Defaults to 3, the devnet dev account.
+#        FAUCET_BASE_PATH   set to "/" if Settings -> Pages -> Custom domain
+#          is in use -- the default (/<repo>/) is only correct for the plain
+#          https://<owner>.github.io/<repo>/ URL and breaks every asset on a
+#          custom domain, which serves from the root.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a run in progress finish rather than cancelling it: a half-deployed
+# faucet is worse than a stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build and obfuscate
+        env:
+          # The secret. Masked in logs by Actions; the guard step below is what
+          # keeps it from being written to the job summary or an artifact
+          # listing in some future edit of this file.
+          FAUCET_MNEMONIC: ${{ secrets.FAUCET_MNEMONIC }}
+
+          # A project site with no custom domain is served from
+          # https://<owner>.github.io/<repo>/, so asset URLs need that prefix
+          # -- github.event.repository.name is the repo, whatever it gets
+          # renamed to. A custom domain (Settings -> Pages -> Custom domain,
+          # e.g. zenoglyphs.zenon.foo) serves from the root instead, so that
+          # prefix is wrong there and breaks every asset URL. Set the
+          # FAUCET_BASE_PATH repository variable to "/" to override this
+          # default when using a custom domain.
+          FAUCET_BASE_PATH: ${{ vars.FAUCET_BASE_PATH || format('/{0}/', github.event.repository.name) }}
+
+          # Not secret -- these end up readable in the bundle regardless, so
+          # they are repository variables rather than secrets. Each falls back
+          # to the devnet default in src/network.ts when unset.
+          FAUCET_NETWORK_NAME: ${{ vars.FAUCET_NETWORK_NAME }}
+          FAUCET_RPC_URL: ${{ vars.FAUCET_RPC_URL }}
+          FAUCET_CHAIN_ID: ${{ vars.FAUCET_CHAIN_ID }}
+          FAUCET_PP_ZTS: ${{ vars.FAUCET_PP_ZTS }}
+          FAUCET_GLYPHS_ZTS: ${{ vars.FAUCET_GLYPHS_ZTS }}
+          FAUCET_ACCOUNT_INDEX: ${{ vars.FAUCET_ACCOUNT_INDEX }}
+        run: |
+          if [ -z "$FAUCET_MNEMONIC" ]; then
+            echo "::error::FAUCET_MNEMONIC repository secret is not set."
+            echo "::error::Settings -> Secrets and variables -> Actions -> New repository secret"
+            exit 1
+          fi
+          if [ -z "$FAUCET_RPC_URL" ]; then
+            echo "::warning::FAUCET_RPC_URL is unset, so this build points at" \
+                 "http://localhost:35997 from src/network.ts. A page served over" \
+                 "HTTPS cannot call it -- the browser blocks it as mixed content." \
+                 "Set the FAUCET_RPC_URL repository variable to an https:// or" \
+                 "wss:// node."
+          fi
+          npm run build
+
+      # A second, independent check on the artifact that is about to become
+      # public. scripts/obfuscate.ts already asserts this, but that script runs
+      # inside the build it is checking; this one looks at the finished dist/
+      # from outside, and greps the whole tree rather than just the JS chunks.
+      - name: Verify the mnemonic is not readable in dist/
+        env:
+          FAUCET_MNEMONIC: ${{ secrets.FAUCET_MNEMONIC }}
+        run: |
+          set -euo pipefail
+          words=$(echo "$FAUCET_MNEMONIC" | tr -s '[:space:]' ' ' | sed 's/^ //; s/ $//')
+          first_two=$(echo "$words" | cut -d' ' -f1-2)
+          # grep -r -F -q, with the needle on stdin so it never appears in a
+          # command line, a log line, or the process table.
+          if printf '%s' "$first_two" | grep -rFqf - dist/; then
+            echo "::error::two consecutive mnemonic words are readable in dist/ -- not deploying"
+            exit 1
+          fi
+          echo "dist/ contains no readable run of the mnemonic"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

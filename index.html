@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Glyph faucet</title>
+    <meta name="description" content="Swap PlasmaPoints for GLYPH." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' fill='%23141414'/><g fill='none' stroke='%2367E646' stroke-width='2.6' stroke-linecap='square' stroke-linejoin='miter'><path d='M5.3,5.3H18.7L5.3,18.7H18.7'/><path d='M9.6,9.6L14.4,14.4'/></g></svg>" />
+  </head>
+  <body>
+    <canvas id="bg" aria-hidden="true"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <main class="card">
+      <header class="head">
+        <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square" stroke-linejoin="miter">
+            <path d="M5.3,5.3H18.7L5.3,18.7H18.7" />
+            <path d="M9.6,9.6L14.4,14.4" />
+          </g>
+        </svg>
+        <h1>Glyph faucet</h1>
+        <p class="sub">Swap PlasmaPoints for GLYPH</p>
+      </header>
+
+      <section class="amount" aria-label="How much GLYPH to claim">
+        <button id="less" class="step" type="button" aria-label="one fewer">&minus;</button>
+        <div class="count">
+          <output id="n" for="less more">1</output>
+          <span class="unit">GLYPH</span>
+        </div>
+        <button id="more" class="step" type="button" aria-label="one more">+</button>
+      </section>
+      <p class="rate">for <strong id="cost">1,000</strong> PP</p>
+
+      <section id="wallet" class="wallet">
+        <button id="connect" class="ghost" type="button">Connect Syrius</button>
+      </section>
+
+      <button id="claim" class="primary" type="button" disabled>Claim</button>
+      <p id="supply" class="supply">reading the faucet balance<span class="dots"><i>.</i><i>.</i><i>.</i></span></p>
+
+      <section id="status" class="status" hidden aria-live="polite">
+        <p id="line" class="line"><span id="msg"></span><span id="msgdots" class="dots"><i>.</i><i>.</i><i>.</i></span></p>
+        <details id="stepsBox" class="stepsbox live" open>
+          <summary id="stepsSummary">Transactions</summary>
+          <ol id="steps" class="steps"></ol>
+        </details>
+        <button id="cancel" class="ghost small" type="button">Cancel</button>
+      </section>
+
+      <section id="done" class="finished" hidden aria-live="polite">
+        <svg class="tick" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 12.5l5.2 5.2L20 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <p id="doneMsg"></p>
+        <button id="again" class="ghost" type="button">Claim more</button>
+      </section>
+
+      <section id="errorBox" class="error" hidden aria-live="polite">
+        <p id="error"></p>
+        <button id="retry" class="ghost small" type="button" hidden>Retry</button>
+      </section>
+
+      <section id="dev" class="dev" hidden>
+        <span class="devtag">devnet</span>
+        <span id="devText"></span>
+        <button id="fund" class="ghost small" type="button">Send me PP</button>
+      </section>
+    </main>
+
+    <footer id="foot" class="foot">
+      <span id="netName"></span>
+      <span id="netTag"></span>
+    </footer>
+
+    <button id="motion" class="motion-toggle" type="button" aria-pressed="false" aria-label="Stop motion" title="Stop motion"></button>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
