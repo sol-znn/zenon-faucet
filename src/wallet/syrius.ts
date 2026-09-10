@@ -116,6 +116,73 @@ function provider(): ZenonProvider {
 }
 
 /**
+ * The names a call accepts, most current first. The extension carries no
+ * version the page can rely on -- `version` is optional and older builds omit
+ * it -- so a call is resolved by asking what is actually there, and the aliases
+ * are the names the same call has answered to across builds.
+ */
+const CONNECT = ['connect', 'enable'] as const
+
+/**
+ * Resolves a provider method, bound to the provider.
+ *
+ * Calling a name the extension does not have produces a bare TypeError, and
+ * after scripts/obfuscate.ts that reads `ht(...)[nl(...)] is not a function` --
+ * naming neither the method nor the wallet, on a page where the only thing the
+ * reader can act on is *which* wallet is too old. 4200 is already "this version
+ * of Syrius does not support that request"; this says which request, and lists
+ * what the provider does offer so the next alias can be added without a second
+ * round trip through someone else's browser.
+ */
+function method(p: ZenonProvider, names: readonly string[]): (...args: unknown[]) => Promise<unknown> {
+  const holder = p as unknown as Record<string, unknown>
+  for (const name of names) {
+    const fn = holder[name]
+    if (typeof fn === 'function') return (fn as (...a: unknown[]) => Promise<unknown>).bind(p)
+  }
+  throw new WalletError(
+    4200,
+    `this version of Syrius has no ${names[0]}() — it offers ${callables(p)}. Update the extension.`,
+  )
+}
+
+/** Every callable the provider exposes, own and inherited, for that message. */
+function callables(p: ZenonProvider): string {
+  const found = new Set<string>()
+  const holder = p as unknown as Record<string, unknown>
+  for (let o: object | null = p; o && o !== Object.prototype; o = Object.getPrototypeOf(o)) {
+    for (const name of Object.getOwnPropertyNames(o)) {
+      if (name === 'constructor') continue
+      // A property can be an accessor that throws; one that won't answer what
+      // it is isn't a method worth naming.
+      try {
+        if (typeof holder[name] === 'function') found.add(name)
+      } catch {
+        continue
+      }
+    }
+  }
+  return found.size === 0 ? 'no callable methods at all' : [...found].sort().join(', ')
+}
+
+/**
+ * Calls a provider method for a value the page can do without, falling back to
+ * `whenMissing` if the method is absent or the call fails.
+ *
+ * The absence is thrown by `method()` *synchronously*, which is the whole
+ * reason this is a wrapper and not a trailing `.catch()` on the call: a
+ * `p.getAccounts().catch(...)` never reaches its own catch when `getAccounts`
+ * is not there, because the TypeError lands while the argument is being built.
+ */
+async function ask<T>(p: ZenonProvider, names: readonly string[], whenMissing: T): Promise<T> {
+  try {
+    return (await method(p, names)()) as T
+  } catch {
+    return whenMissing
+  }
+}
+
+/**
  * A Vue-style reactive object, or anything else exotic, cannot cross
  * `postMessage`: it is structured clone, and a Proxy fails it outright with
  * "could not be cloned", naming no field. The round trip happens here, at the
@@ -137,7 +204,7 @@ export interface WalletState {
 
 export async function connect(): Promise<WalletState> {
   try {
-    await provider().connect()
+    await method(provider(), CONNECT)()
   } catch (err) {
     throw err instanceof WalletError ? err : translate(err)
   }
@@ -146,7 +213,7 @@ export async function connect(): Promise<WalletState> {
 
 export async function disconnect(): Promise<void> {
   try {
-    await provider().disconnect()
+    await method(provider(), ['disconnect'])()
   } catch (err) {
     throw err instanceof WalletError ? err : translate(err)
   }
@@ -158,12 +225,12 @@ export async function disconnect(): Promise<void> {
  * load and re-read after an account switch without asking again.
  */
 export async function readState(): Promise<WalletState> {
-  if (!window.zenon) return { address: null, chainId: null, nodeUrl: null }
-  const p = provider()
+  const p = window.zenon
+  if (!p) return { address: null, chainId: null, nodeUrl: null }
   const [accounts, chainId, nodeUrl] = await Promise.all([
-    p.getAccounts().catch(() => [] as string[]),
-    p.getChainId().catch(() => null),
-    p.getNodeUrl().catch(() => null),
+    ask<string[]>(p, ['getAccounts'], []),
+    ask<number | string | null>(p, ['getChainId'], null),
+    ask<string | null>(p, ['getNodeUrl'], null),
   ])
   return {
     address: accounts?.[0] ?? null,
@@ -221,7 +288,7 @@ export async function sendAccountBlock(
 
   let result: SendAccountBlockResult
   try {
-    result = await provider().sendAccountBlock(plain(template))
+    result = (await method(provider(), ['sendAccountBlock'])(plain(template))) as SendAccountBlockResult
   } catch (err) {
     throw err instanceof WalletError ? err : translate(err)
   }

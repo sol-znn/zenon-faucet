@@ -509,9 +509,20 @@ function renderDone(state: ClaimState): void {
 // ---------------------------------------------------------------------------
 
 async function readWallet(): Promise<void> {
-  const state = await syrius.readState()
-  address = state.address
-  chainId = state.chainId
+  try {
+    const state = await syrius.readState()
+    address = state.address
+    chainId = state.chainId
+  } catch (err) {
+    // `readState` already answers `null` for a wallet that won't answer, so
+    // reaching here means the provider itself is broken rather than absent.
+    // Both callers are unattended -- page load, and the extension announcing a
+    // change -- so without this the page would sit there looking disconnected
+    // with the reason only in the console, as an unhandled rejection.
+    address = null
+    chainId = null
+    showError(err instanceof Error ? err.message : String(err))
+  }
   await renderWallet()
 }
 
